@@ -1,0 +1,14 @@
+[package]
+name = "txredaction-snark"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sha2 = { workspace = true }
+sha256-cf= { version = "0.1", path = "../sha256-cf" }
+peqpreimage-snark = { version = "0.1", path = "../peqpreimage-snark" }
+
+[[bench]]
+name = "txredaction-snark-bench"
+path = "benches/bench.rs"
+harness = false

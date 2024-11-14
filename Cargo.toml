@@ -1,0 +1,11 @@
+[workspace]
+resolver = "2"
+
+members = [
+    "crates/sha256-cf",
+    "crates/peqpreimage-snark",
+    "crates/txredaction-snark"
+]
+
+[workspace.dependencies]
+sha2 = { version = "0.10" }
