@@ -7,7 +7,7 @@ Note that the length of the preimage `original_bytes` and the public `redacted_b
 
 ## Implementation strategies
 
-This crate follows two strategies to implement the trait [`PeqSnark`](./src/lib.rs#l27).
+This crate follows two strategies to implement the trait [`PeqSnark`](./src/lib.rs#l28).
 
 - A commit-and-prove approach with [Groth16](https://eprint.iacr.org/2016/260). The prover produces as _many_ proofs as SHA56 blocks in the preimage. (Parallelization with [rayon](https://docs.rs/rayon/latest/rayon/) is used to speed up both, proving and verification runtime.).
 - An incrementally verified computation (IVC) approach with [Nova](https://eprint.iacr.org/2021/370). This implementation produces a _single_ proof. 
@@ -15,7 +15,7 @@ This crate follows two strategies to implement the trait [`PeqSnark`](./src/lib.
 ## Arithmetization
 
 ### Commit-and-prove strategy
-The R1CS for the commit-and-prove circuit [`MidCircuit`](./src/mid/circuit.rs#L196) is built using [arkworks](https://github.com/arkworks-rs) over the scalar field of BLS381. SHA256 midstates are committed with Pedersen hash defined over JubJub. 
+The R1CS for the commit-and-prove circuit [`MidCircuit`](./src/cp/circuit.rs#L187) is built using [arkworks](https://github.com/arkworks-rs) over the scalar field of BLS381. SHA256 midstates are committed with Pedersen hash defined over JubJub. 
 
 **Circuit logic:** // The commitment key `ck` is hard-coded in the circuit's description.
  
@@ -25,7 +25,7 @@ The R1CS for the commit-and-prove circuit [`MidCircuit`](./src/mid/circuit.rs#L1
 * Check that `com_prev = Pedersen::commit(ck,mid_prev,r_prev)`
 
 ### IVC strategy
-For the IVC approach, we use [bellpepper](https://github.com/argumentcomputer/bellpepper) to build the R1CS of the [`SelCircuit`](./src/sel/nova/circuit.rs#L17) over the scalar field of BN254. The accumulated hash is set to Poseidon.
+For the IVC approach, we use [bellpepper](https://github.com/argumentcomputer/bellpepper) to build the R1CS of the [`SelCircuit`](./src/ivc/nova/circuit.rs#L17) over the scalar field of BN254. The accumulated hash is set to Poseidon.
 
 **Circuit logic:**
 
@@ -45,7 +45,7 @@ Gadget | R1CS constraints with arkworks| R1CS constraints with belleper
 
 ## How to use this library
 
-Callers should use either of the two exposed default implementations: [`DefaultCommitandProvePeqScheme`](./src/lib.rs#L12) or [`DefaultIvcPeqScheme`](./src/lib.rs#L19). See the examples folder for more details.
+Callers should use either of the two exposed default implementations: [`DefaultCommitandProvePeqScheme`](./src/lib.rs#L11) or [`DefaultIvcPeqScheme`](./src/lib.rs#L18). See the examples folder for more details.
 
 ## Commit-and-prove or IVC, which one to use?
 It depends on how large are the `original_bytes` (the hash preimage) and the `redacted_bytes`. 

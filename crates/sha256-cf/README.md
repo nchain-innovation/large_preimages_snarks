@@ -10,7 +10,7 @@ Start importing the compression function:
 use sha256_cf::Sha256CF;
 ```
 
-First, let's pad e.g. 56 bytes, which results in two SHA256 [`Block`s](./src/lib.rs#L132) 
+First, let's pad e.g. 56 bytes, which results in two SHA256 [`Block`](./src/lib.rs#L96) 
 
 ```rust
 let bytes = [0u8;56];
@@ -27,7 +27,7 @@ let midstate = Sha256CF::apply_compression_function(&init_state, &padded_blocks[
 let digest:Digest = Sha256CF::apply_compression_function(&midstate, &padded_blocks[1]).into();
 ```
 
-The calculated [`Digest`](./src/lib.rs#L240) matches the one from RustCrypto:
+The calculated [`Digest`](./src/lib.rs#L206) matches the one from RustCrypto:
 
 ```rust
 use sha2::Sha256; // RustCrypto.
