@@ -1,12 +1,8 @@
 use crate::ivc::nova::BN256ScalarField;
 
-use super::{AccumulatedHasher,PoseidonHasher};
+use super::{AccumulatedHasher,PoseidonConstants,U10};
 
 use bellpepper_core::{num::AllocatedNum, ConstraintSystem, SynthesisError};
-use neptune::{
-  circuit2::Elt, 
-  sponge::{circuit::SpongeCircuit,vanilla::SpongeTrait,
-}};
 
 pub struct AccumulatedHasherGadget;
 
@@ -20,33 +16,15 @@ impl AccumulatedHasherGadget {
       selector: &[AllocatedNum<BN256ScalarField>]
   ) -> Result<AllocatedNum<BN256ScalarField>,SynthesisError> {
 
-    // Prepare hash preimage for neptune.
-    let a_in_elt = Self::to_elts(&[a_in.clone()]).pop().unwrap();
-    let block_elts = Self::to_elts(block);
-    let selector_elts = Self::to_elts(selector);
-    let scalars = AccumulatedHasher::concat(&a_in_elt, block_elts.as_slice(), selector_elts.as_slice());
-
-    // Derive parameters (constants and mode).
-    let (pc,_,_,mode) = PoseidonHasher::derive_parameters(block.len()+selector.len()+1);
-
-    // Neptune hash circuit.
-    let mut sponge = SpongeCircuit::new_with_constants(&pc, mode);
-
-    let mut ns = cs.namespace(|| "hashing redacted block and selector");
-    let acc = &mut ns;
-    let a_out_elt = PoseidonHasher::apply_hash(&mut sponge,scalars.as_slice(),acc);
-
-    let a_out = Elt::ensure_allocated(&a_out_elt, &mut ns.namespace(|| "ensure a_out allocated"), true);
-
-    a_out
-  }
-
-  fn to_elts(scalars: &[AllocatedNum<BN256ScalarField>]) -> Vec<Elt<BN256ScalarField>> {
-    let elts: Vec<Elt<BN256ScalarField>> = scalars.iter()
-    .map(|scalar|{Elt::Allocated(scalar.clone())})
-    .collect();
-
-    elts
+    // Prepare hash preimage.
+    let scalars = AccumulatedHasher::concat(a_in, block, selector);
+    
+    // Poseidon constants.
+    if scalars.len() > 10 { panic!("Arity of Poseidon set to 10, but there are {} preimage scalars",scalars.len()) };
+    let consts = PoseidonConstants::<BN256ScalarField, U10>::new();
+    
+    // Hash.
+    neptune::circuit2::poseidon_hash_allocated(cs.namespace(|| "hashing redacted block and selector"), scalars, &consts)
   }
 }
 

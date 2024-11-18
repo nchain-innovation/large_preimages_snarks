@@ -34,38 +34,42 @@ For the IVC approach, we use [bellpepper](https://github.com/argumentcomputer/be
 * Check that `a_cur = Poseidon(a_prev,redacted_block,σ)` // Accumulate selector `σ` (and redacted blocks)
 
 ### Resulting R1CS constraints
-Note that the first two gadgets of the circuits are the same. The overhead is in the SHA256 gadget, as expected. Arithmetization with bellpeper seems to be slightly better.
+Note that the first two gadgets of the circuits are the same. The overhead is in the SHA256 gadget, as expected.
 
 Gadget | R1CS constraints with arkworks| R1CS constraints with belleper
 |----- | ---------------- | -------- 
 | SHA256CF | 42415 | 29544
 | Partial equality (of blocks) | 2175 | 2624
 | Pedersen (twice) | 5102 | N/A
-| Accumulated hash| N/A | 3109
+| Accumulated hash (Poseidon)| N/A | 436
 
-## How to use this library
+**Note:** Gadgets above are not optimized. For example, the prover of the commit-and-prove approach can be optimized with: 
+- using Poseidon hashes to commit to midstates, 
+- reusing the SHA256 gadget output to check correct commitment generation.
 
-Callers should use either of the two exposed default implementations: [`DefaultCommitandProvePeqScheme`](./src/lib.rs#L11) or [`DefaultIvcPeqScheme`](./src/lib.rs#L18). See the examples folder for more details.
+Other source of improvement is to optimally encode, as field elements, SHA256 states, SHA256 blocks, and selectors in either approach. This would likely speed up the IVC-based verification, among other things. More optimizations are likely to be possible.
 
 ## Commit-and-prove or IVC, which one to use?
 It depends on how large are the `original_bytes` (the hash preimage) and the `redacted_bytes`. 
 
-Benchmarks indicates that for sizes of up to ~1KB the commit-and-prove approach yields faster proving time. For larger sizes, the IVC approach outperforms, and the saving gets better the larger the size is, at 128KB is ~30% faster. On the downside, Nova has slow verification. Regarding proof size, the IVC approach is always at ~ 11,4KB. The crossover with the commit-and-prove approach happens at preimage sizes of ~ 4KB. The full benchmarks are [here](../txredaction-snark/benches/128KB.csv).
+Benchmarks indicates that for sizes of up to ~384 bytes (6 blocks) the commit-and-prove approach yields faster proving time. For larger sizes, the IVC approach outperforms, and the saving gets better the larger the size is, at 128KB is 3x faster. On the downside, Nova has slower verification (about one order of magnitude), mainly due to the recomputation of the accumulated Poseidon hash over the redacted bytes. Regarding proof size, the IVC approach is always at ~11,4KB. The crossover with the commit-and-prove approach happens at ~4KB preimage sizes. The full benchmarks are [here](../txredaction-snark/benches/128KB.csv).
 
 | Preimage size | Strategy | Prover | Verifier | Proof size
 | --- | ----- | -----------------| ---------------- | ----- |
-| 128 bytes | Commit-and-prove (Groth16) |~ 1,49 secs |~ 0,012 secs | 752 bytes
-| 128 bytes | IVC (Nova) | ~ 2,69 secs | ~ 0,82 secs | ~ 11,6KB
-| 512 bytes | Commit-and-prove (Groth16) | ~ 4,9 secs | ~ 0,018 secs | ~ 2KB 
-| 512 bytes | IVC (Nova) | ~ 5,81 secs | ~ 2,5 secs | ~ 11,6KB
-| 1KB | Commit-and-prove (Groth16) | ~ 8,76 secs |~ 0,034 secs | ~ 3,7KB 
-| 1KB | IVC (Nova) | ~ 8,95 secs | ~ 4,61 secs | ~ 11,6KB
-| 16KB | Commit-and-prove (Groth16) | ~ 2,5 mins |~ 0,27 secs | ~ 56KB 
-| 16KB | IVC (Nova) | ~ 1,8 mins | ~ 1,1 mins | ~ 11,6KB 
-| 64KB | Commit-and-prove (Groth16) | ~ 10 mins | ~ 1,21 secs | ~ 224KB 
-| 64KB | IVC (Nova) | ~ 7,47 mins | ~ 1,05 mins | ~11,6KB
-| 128KB | Commit-and-prove (Groth16) | ~ 24 mins | ~ 2,57 secs | ~448KB 
-| 128KB | IVC (Nova) | ~ 16,94 mins | ~ 9,05 mins | ~ 11,6KB
+| 128 bytes | Commit-and-prove (Groth16) |~1,49 secs |~0,012 secs | 752 bytes
+| 128 bytes | IVC (Nova) | ~3,21 secs | ~0,18 secs | ~11,6KB
+| 512 bytes | Commit-and-prove (Groth16) | ~4,9 secs | ~0,018 secs | ~2KB 
+| 512 bytes | IVC (Nova) | ~4,31 secs | ~0,38 secs | ~11,6KB
+| 1KB | Commit-and-prove (Groth16) | ~8,76 secs |~0,034 secs | ~3,7KB 
+| 1KB | IVC (Nova) | ~5,7 secs | ~0,56 secs | ~11,6KB
+| 16KB | Commit-and-prove (Groth16) | ~2,5 mins |~0,27 secs | ~56KB 
+| 16KB | IVC (Nova) | ~57 secs | ~5,84 secs | ~11,6KB 
+| 64KB | Commit-and-prove (Groth16) | ~10 mins | ~1,21 secs | ~224KB 
+| 64KB | IVC (Nova) | ~3,7 mins | ~22,49 secs | ~11,6KB
+| 128KB | Commit-and-prove (Groth16) | ~24 mins | ~2,57 secs | ~448KB 
+| 128KB | IVC (Nova) | ~7,45 mins | ~45,51 mins | ~ 11,6KB
 
+## How to use this library
 
+Callers should use either of the two exposed default implementations: [`DefaultCommitandProvePeqScheme`](./src/lib.rs#L11) or [`DefaultIvcPeqScheme`](./src/lib.rs#L18). See the example [`partial_equality.rs`](./examples/partial_equality.rs) for more details.
 

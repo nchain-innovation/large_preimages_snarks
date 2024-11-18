@@ -219,7 +219,8 @@ impl SelCircuit {
     let mut block_fes: Vec<BN256ScalarField> = Vec::new();
     for _i in 0..8 {block_fes.push(BN256ScalarField::from(0));}
     let mut selector_fes: Vec<BN256ScalarField> = Vec::new();
-    for _i in 0..64 {selector_fes.push(BN256ScalarField::from(0));}
+    selector_fes.push(BN256ScalarField::from(0));
+
 
     let a_in_alloc = SelCircuit::allocate_field_elements(&mut benchcs, &[a_in]).unwrap().pop().unwrap();
     let block_fes_alloc = SelCircuit::allocate_field_elements(&mut benchcs, block_fes.as_slice()).unwrap();
