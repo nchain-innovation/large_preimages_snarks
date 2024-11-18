@@ -67,7 +67,7 @@ Benchmarks indicates that for sizes of up to ~384 bytes (6 blocks) the commit-an
 | 64KB | Commit-and-prove (Groth16) | ~10 mins | ~1,21 secs | ~224KB 
 | 64KB | IVC (Nova) | ~3,7 mins | ~22,49 secs | ~11,6KB
 | 128KB | Commit-and-prove (Groth16) | ~24 mins | ~2,57 secs | ~448KB 
-| 128KB | IVC (Nova) | ~7,45 mins | ~45,51 mins | ~ 11,6KB
+| 128KB | IVC (Nova) | ~7,45 mins | ~45,43 secs | ~ 11,6KB
 
 ## How to use this library
 
